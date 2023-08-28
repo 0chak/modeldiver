@@ -2,6 +2,9 @@
 
 Devtool to visualize your Laravel project model relations in an automatically generated ERD diagram
 
+![Screenshot 2023-08-28 at 17 31 43](https://github.com/0chak/modeldiver/assets/38387234/4c84c61e-8fe4-4ead-980a-96d3bc84f148)
+
+
 > **Note**
 > This package is in very early development stage, consider it pre-alpha
 
