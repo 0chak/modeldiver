@@ -18,7 +18,7 @@ class ModeldiverPackageServiceProvider extends PackageServiceProvider
             // ->hasViewComposer('*', MyViewComposer::class)
             // ->sharesDataWithAllViews('downloads', 3)
             // ->hasTranslations()
-            // ->hasAssets()
+            ->hasAssets()
             // ->publishesServiceProvider('ModelDiverServiceProvider')
             ->hasRoute('web')
             // ->hasMigration('create_package_tables')
@@ -26,7 +26,7 @@ class ModeldiverPackageServiceProvider extends PackageServiceProvider
             ->hasInstallCommand(function(InstallCommand $command) {
                 $command
                     // ->publishConfigFile()
-                    // ->publishAssets()
+                    ->publishAssets()
                     // ->publishMigrations()
                     ->copyAndRegisterServiceProviderInApp();
                     // ->askToStarRepoOnGitHub();

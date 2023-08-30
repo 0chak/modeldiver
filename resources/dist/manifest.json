@@ -1,0 +1,19 @@
+{
+  "resources/css/main.css": {
+    "file": "main-413c4aff.css",
+    "isEntry": true,
+    "src": "resources/css/main.css"
+  },
+  "resources/js/main.css": {
+    "file": "main-baabd68a.css",
+    "src": "resources/js/main.css"
+  },
+  "resources/js/main.js": {
+    "css": [
+      "main-baabd68a.css"
+    ],
+    "file": "main-3943371b.js",
+    "isEntry": true,
+    "src": "resources/js/main.js"
+  }
+}
