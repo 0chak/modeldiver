@@ -14,7 +14,6 @@
         "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false"
     },
     "devDependencies": {
-        "@codehardt/leader-line": "^1.0.9",
         "anim-event": "^1.0.17",
         "autoprefixer": "^10.4.15",
         "laravel-vite-plugin": "^0.7.3",

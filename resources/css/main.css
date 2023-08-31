@@ -1,3 +1,52 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.erd-line{
+    position:absolute;
+    overflow:visible!important;
+    pointer-events:none!important;
+    font-size:16px
+}
+#erd-line-defs {
+    width: 0;
+    height: 0;
+    position: absolute;
+    left: 0;
+    top: 0
+}
+.erd-line-line-path {
+    fill: none
+}
+.erd-line-mask-bg-rect {
+    fill: white
+}
+.erd-line-caps-mask-anchor,
+.erd-line-caps-mask-marker-shape {
+    fill: black
+}
+.erd-line-caps-mask-anchor {
+    stroke: black
+}
+.erd-line-caps-mask-line,
+.erd-line-plugs-face {
+    stroke: rgba(0,0,0,0)
+}
+.erd-line-line-mask-shape {
+    stroke: white
+}
+.erd-line-line-outline-mask-shape {
+    stroke: black
+}
+.erd-line-plug-mask-shape {
+    fill: white;
+    stroke: black
+}
+.erd-line-plug-outline-mask-shape {
+    fill: black;
+    stroke: white
+}
+.erd-line-areaAnchor{
+    position: absolute;
+    overflow: visible !important
+}

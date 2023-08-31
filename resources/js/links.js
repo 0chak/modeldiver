@@ -1,6 +1,5 @@
 
 import LeaderLine from "./leader-line";
-import "@codehardt/leader-line/leader-line.min.css";
 
 export default {
     refresh: function(id) {
@@ -48,7 +47,7 @@ export default {
                     endPlugSize: 2,
                     size: 2,
                     opacity: 0.66,
-                    // path: 'grid'
+                    path: 'grid'
                 }
             )
         })

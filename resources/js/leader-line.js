@@ -1,48 +1,19 @@
 /*
  * LeaderLine
- * https://anseki.github.io/leader-line/
+ * https://anseki.github.io/erd-line/
  *
  * Copyright (c) 2021 anseki
  * Licensed under the MIT license.
  */
 
-/* exported LeaderLine */
-/* eslint no-underscore-dangle: [2, {"allow": ["_id"]}] */
-/* global traceLog:false */
 import anim from './anim'
 import AnimEvent from 'anim-event'
 import pathDataPolyfill from './path-data-polyfill';
-;var LeaderLine = (function() { // eslint-disable-line no-extra-semi
+const LeaderLine = (function() {
   'use strict';
 
-  /**
-   * An object that simulates `DOMRect` to indicate a bounding-box.
-   * @typedef {Object} BBox
-   * @property {(number|null)} left - ScreenCTM
-   * @property {(number|null)} top - ScreenCTM
-   * @property {(number|null)} right - ScreenCTM
-   * @property {(number|null)} bottom - ScreenCTM
-   * @property {(number|null)} x - Substitutes for left
-   * @property {(number|null)} y - Substitutes for top
-   * @property {(number|null)} width
-   * @property {(number|null)} height
-   */
-
-  /**
-   * An object that has coordinates of ScreenCTM.
-   * @typedef {Object} Point
-   * @property {number} x
-   * @property {number} y
-   */
-
-  /**
-   * @typedef {Object} AnimOptions
-   * @property {number} duration
-   * @property {(string|number[])} timing - FUNC_KEYS or [x1, y1, x2, y2]
-   */
-
   var
-    APP_ID = 'leader-line',
+    APP_ID = 'erd-line',
     SOCKET_TOP = 1, SOCKET_RIGHT = 2, SOCKET_BOTTOM = 3, SOCKET_LEFT = 4,
     SOCKET_KEY_2_ID = {top: SOCKET_TOP, right: SOCKET_RIGHT, bottom: SOCKET_BOTTOM, left: SOCKET_LEFT},
 
@@ -71,38 +42,22 @@ import pathDataPolyfill from './path-data-polyfill';
     DEFS_ID = APP_ID + '-defs',
 
     DEFS_HTML=`
-        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" id="leader-line-defs">
-            <style>
-                <![CDATA[.leader-line{position:absolute;overflow:visible!important;pointer-events:none!important;font-size:16px}
-                #leader-line-defs{width:0;height:0;position:absolute;left:0;top:0}
-                .leader-line-line-path{fill:none}
-                .leader-line-mask-bg-rect{fill:white}
-                .leader-line-caps-mask-anchor,
-                .leader-line-caps-mask-marker-shape{fill:black}
-                .leader-line-caps-mask-anchor{stroke:black}
-                .leader-line-caps-mask-line,
-                .leader-line-plugs-face{stroke:rgba(0,0,0,0)}
-                .leader-line-line-mask-shape{stroke:white}
-                .leader-line-line-outline-mask-shape{stroke:black}
-                .leader-line-plug-mask-shape{fill:white;stroke:black}
-                .leader-line-plug-outline-mask-shape{fill:black;stroke:white}
-                .leader-line-areaAnchor{position:absolute;overflow:visible!important}]]>
-            </style>
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" id="erd-line-defs">
             <defs>
-                <circle id="leader-line-disc" cx="0" cy="0" r="5"/>
-                <rect id="leader-line-square" x="-5" y="-5" width="10" height="10"/>
-                <polygon id="leader-line-arrow1" points="-8,-8 8,0 -8,8 -5,0"/>
-                <polygon id="leader-line-arrow22" points="-4,-8 4,0 -4,8 -7,5 -2,0 -7,-5"/>
-                <polygon id="leader-line-arrow3" points="-4,-5 8,0 -4,5"/>
-                <g id="leader-line-hand"><path style="fill: #fcfcfc" d="M9.19 11.14h4.75c1.38 0 2.49-1.11 2.49-2.49 0-.51-.15-.98-.41-1.37h1.3c1.38 0 2.49-1.11 2.49-2.49s-1.11-2.53-2.49-2.53h1.02c1.38 0 2.49-1.11 2.49-2.49s-1.11-2.49-2.49-2.49h14.96c1.37 0 2.49-1.11 2.49-2.49s-1.11-2.49-2.49-2.49H16.58C16-9.86 14.28-11.14 9.7-11.14c-4.79 0-6.55 3.42-7.87 4.73H-2.14v13.23h3.68C3.29 9.97 5.47 11.14 9.19 11.14L9.19 11.14Z"/>
+                <circle id="erd-line-disc" cx="0" cy="0" r="5"/>
+                <rect id="erd-line-square" x="-5" y="-5" width="10" height="10"/>
+                <polygon id="erd-line-arrow1" points="-8,-8 8,0 -8,8 -5,0"/>
+                <polygon id="erd-line-arrow22" points="-4,-8 4,0 -4,8 -7,5 -2,0 -7,-5"/>
+                <polygon id="erd-line-arrow3" points="-4,-5 8,0 -4,5"/>
+                <g id="erd-line-hand"><path style="fill: #fcfcfc" d="M9.19 11.14h4.75c1.38 0 2.49-1.11 2.49-2.49 0-.51-.15-.98-.41-1.37h1.3c1.38 0 2.49-1.11 2.49-2.49s-1.11-2.53-2.49-2.53h1.02c1.38 0 2.49-1.11 2.49-2.49s-1.11-2.49-2.49-2.49h14.96c1.37 0 2.49-1.11 2.49-2.49s-1.11-2.49-2.49-2.49H16.58C16-9.86 14.28-11.14 9.7-11.14c-4.79 0-6.55 3.42-7.87 4.73H-2.14v13.23h3.68C3.29 9.97 5.47 11.14 9.19 11.14L9.19 11.14Z"/>
                     <path style="fill: black" d="M13.95 12c1.85 0 3.35-1.5 3.35-3.35 0-.17-.02-.34-.04-.51h.07c1.85 0 3.35-1.5 3.35-3.35 0-.79-.27-1.51-.72-2.08 1.03-.57 1.74-1.67 1.74-2.93 0-.59-.16-1.15-.43-1.63h12.04c1.85 0 3.35-1.5 3.35-3.35 0-1.85-1.5-3.35-3.35-3.35H17.2C16.26-10.93 13.91-12 9.7-12 5.36-12 3.22-9.4 1.94-7.84c0 0-.29.33-.5.57-.63 0-3.58 0-3.58 0C-2.61-7.27-3-6.88-3-6.41v13.23c0 .47.39.86.86.86 0 0 2.48 0 3.2 0C2.9 10.73 5.29 12 9.19 12L13.95 12ZM9.19 10.28c-3.46 0-5.33-1.05-6.9-3.87-.15-.27-.44-.44-.75-.44 0 0-1.81 0-2.82 0V-5.55c1.06 0 3.11 0 3.11 0 .25 0 .44-.06.61-.25l.83-.95c1.23-1.49 2.91-3.53 6.43-3.53 3.45 0 4.9.74 5.57 1.72h-4.3c-.48 0-.86.38-.86.86s.39.86.86.86h22.34c.9 0 1.63.73 1.63 1.63 0 .9-.73 1.63-1.63 1.63H15.83c-.48 0-.86.38-.86.86 0 .47.39.86.86.86h2.52c.9 0 1.63.73 1.63 1.63s-.73 1.63-1.63 1.63h-3.12c-.48 0-.86.38-.86.86 0 .47.39.86.86.86h2.11c.88 0 1.63.76 1.63 1.67 0 .9-.73 1.63-1.63 1.63h-3.2c-.48 0-.86.39-.86.86 0 .47.39.86.86.86h1.36c.05.16.09.34.09.51 0 .9-.73 1.63-1.63 1.63C13.95 10.28 9.19 10.28 9.19 10.28Z"/>
                 </g>
-                <g id="leader-line-crosshair">
+                <g id="erd-line-crosshair">
                     <path d="M0-78.97c-43.54 0-78.97 35.43-78.97 78.97 0 43.54 35.43 78.97 78.97 78.97s78.97-35.43 78.97-78.97C78.97-43.54 43.55-78.97 0-78.97ZM76.51-1.21h-9.91v-9.11h-2.43v9.11h-11.45c-.64-28.12-23.38-50.86-51.5-51.5V-64.17h9.11V-66.6h-9.11v-9.91C42.46-75.86 75.86-42.45 76.51-1.21ZM-1.21-30.76h-9.11v2.43h9.11V-4.2c-1.44.42-2.57 1.54-2.98 2.98H-28.33v-9.11h-2.43v9.11H-50.29C-49.65-28-27.99-49.65-1.21-50.29V-30.76ZM-30.76 1.21v9.11h2.43v-9.11H-4.2c.42 1.44 1.54 2.57 2.98 2.98v24.13h-9.11v2.43h9.11v19.53C-27.99 49.65-49.65 28-50.29 1.21H-30.76ZM1.22 30.75h9.11v-2.43h-9.11V4.2c1.44-.42 2.56-1.54 2.98-2.98h24.13v9.11h2.43v-9.11h19.53C49.65 28 28 49.65 1.22 50.29V30.75ZM30.76-1.21v-9.11h-2.43v9.11H4.2c-.42-1.44-1.54-2.56-2.98-2.98V-28.33h9.11v-2.43h-9.11V-50.29C28-49.65 49.65-28 50.29-1.21H30.76ZM-1.21-76.51v9.91h-9.11v2.43h9.11v11.45c-28.12.64-50.86 23.38-51.5 51.5H-64.17v-9.11H-66.6v9.11h-9.91C-75.86-42.45-42.45-75.86-1.21-76.51ZM-76.51 1.21h9.91v9.11h2.43v-9.11h11.45c.64 28.12 23.38 50.86 51.5 51.5v11.45h-9.11v2.43h9.11v9.91C-42.45 75.86-75.86 42.45-76.51 1.21ZM1.22 76.51v-9.91h9.11v-2.43h-9.11v-11.45c28.12-.64 50.86-23.38 51.5-51.5h11.45v9.11h2.43v-9.11h9.91C75.86 42.45 42.45 75.86 1.22 76.51Z"/>
                     <path d="M0 83.58-7.1 96 7.1 96Z"/>
                     <path d="M0-83.58 7.1-96-7.1-96"/><path d="M83.58 0 96 7.1 96-7.1Z"/><path d="M-83.58 0-96-7.1-96 7.1Z"/>
                 </g>
-                <g id="leader-line-arrow2">
+                <g id="erd-zero-or-many">
                     <path d="m13.7 1h4.3c.6 0 1-.5 1-1s-.5-1-1-1h-4.3l5-4.2a1 1 0 10-1.4-1.6l-5.6 4.9a6 6 0 00-11.7 1.9 6 6 0 0011.7 1.9l5.7 4.9a1 1 0 001.4-.1c.3-.5.3-1.1-.1-1.5l-5-4.2zm-7.7 3a4 4 0 110-8 4 4 0 010 8z"/>
                 </g>
             </defs>
@@ -111,7 +66,7 @@ import pathDataPolyfill from './path-data-polyfill';
     PLUG_BEHIND='behind',
     SYMBOLS = {
         disc: {
-            elmId: 'leader-line-disc',
+            elmId: 'erd-line-disc',
             noRotate: true,
             bBox: {
                 left: -5,
@@ -131,7 +86,7 @@ import pathDataPolyfill from './path-data-polyfill';
             outlineMax: 4
         },
         square: {
-            elmId: 'leader-line-square',
+            elmId: 'erd-line-square',
             noRotate: true,
             bBox: {
                 left: -5,
@@ -151,7 +106,7 @@ import pathDataPolyfill from './path-data-polyfill';
             outlineMax: 4
         },
         arrow1: {
-            elmId: 'leader-line-arrow1',
+            elmId: 'erd-line-arrow1',
             bBox: {
                 left: -8,
                 top: -8,
@@ -170,7 +125,7 @@ import pathDataPolyfill from './path-data-polyfill';
             outlineMax: 1.5
         },
         arrow2: {
-            elmId: 'leader-line-arrow2',
+            elmId: 'erd-zero-or-many',
             bBox: {
                 left: -10,
                 top: -8,
@@ -189,7 +144,7 @@ import pathDataPolyfill from './path-data-polyfill';
             outlineMax: 1.75
         },
         arrow3: {
-            elmId: 'leader-line-arrow3',
+            elmId: 'erd-line-arrow3',
             bBox: {
                 left: -4,
                 top: -5,
@@ -208,7 +163,7 @@ import pathDataPolyfill from './path-data-polyfill';
             outlineMax: 2.5
         },
         hand: {
-            elmId: 'leader-line-hand',
+            elmId: 'erd-line-hand',
             bBox: {
                 left: -3,
                 top: -12,
@@ -225,7 +180,7 @@ import pathDataPolyfill from './path-data-polyfill';
             overhead: 37
         },
         crosshair: {
-            elmId: 'leader-line-crosshair',
+            elmId: 'erd-line-crosshair',
             noRotate: true,
             bBox: {
                 left: -96,
@@ -275,12 +230,12 @@ import pathDataPolyfill from './path-data-polyfill';
 
     DEFAULT_OPTIONS = {
       path: PATH_FLUID,
-      lineColor: 'coral',
+      lineColor: '#41E478',
       lineSize: 4,
       plugSE: [PLUG_BEHIND, DEFAULT_END_PLUG],
-      plugSizeSE: [1, 1],
+      plugSizeSE: [2, 2],
       lineOutlineEnabled: false,
-      lineOutlineColor: 'indianred',
+      lineOutlineColor: '#1F2938',
       lineOutlineSize: 0.25,
       plugOutlineEnabledSE: [false, false],
       plugOutlineSizeSE: [1, 1]
@@ -354,24 +309,24 @@ import pathDataPolyfill from './path-data-polyfill';
     insProps = {}, insId = 0,
     /** @type {Object.<_id: number, props>} */
     insAttachProps = {}, insAttachId = 0,
-    svg2SupportedReverse, svg2SupportedPaintOrder, svg2SupportedDropShadow; // Supported SVG 2 features
+    svg2SupportedReverse, svg2SupportedPaintOrder; // Supported SVG 2 features
 
   // [DEBUG]
-  window.insProps = insProps;
-  window.insAttachProps = insAttachProps;
-  window.isObject = isObject;
-  window.IS_TRIDENT = IS_TRIDENT;
-  window.IS_BLINK = IS_BLINK;
-  window.IS_GECKO = IS_GECKO;
-  window.IS_EDGE = IS_EDGE;
-  window.IS_WEBKIT = IS_WEBKIT;
-  window.engineFlags = function(flags) {
-    if (typeof flags.IS_TRIDENT === 'boolean') { window.IS_TRIDENT = IS_TRIDENT = flags.IS_TRIDENT; }
-    if (typeof flags.IS_BLINK === 'boolean') { window.IS_BLINK = IS_BLINK = flags.IS_BLINK; }
-    if (typeof flags.IS_GECKO === 'boolean') { window.IS_GECKO = IS_GECKO = flags.IS_GECKO; }
-    if (typeof flags.IS_EDGE === 'boolean') { window.IS_EDGE = IS_EDGE = flags.IS_EDGE; }
-    if (typeof flags.IS_WEBKIT === 'boolean') { window.IS_WEBKIT = IS_WEBKIT = flags.IS_WEBKIT; }
-  };
+//   window.insProps = insProps;
+//   window.insAttachProps = insAttachProps;
+//   window.isObject = isObject;
+//   window.IS_TRIDENT = IS_TRIDENT;
+//   window.IS_BLINK = IS_BLINK;
+//   window.IS_GECKO = IS_GECKO;
+//   window.IS_EDGE = IS_EDGE;
+//   window.IS_WEBKIT = IS_WEBKIT;
+//   window.engineFlags = function(flags) {
+//     if (typeof flags.IS_TRIDENT === 'boolean') { window.IS_TRIDENT = IS_TRIDENT = flags.IS_TRIDENT; }
+//     if (typeof flags.IS_BLINK === 'boolean') { window.IS_BLINK = IS_BLINK = flags.IS_BLINK; }
+//     if (typeof flags.IS_GECKO === 'boolean') { window.IS_GECKO = IS_GECKO = flags.IS_GECKO; }
+//     if (typeof flags.IS_EDGE === 'boolean') { window.IS_EDGE = IS_EDGE = flags.IS_EDGE; }
+//     if (typeof flags.IS_WEBKIT === 'boolean') { window.IS_WEBKIT = IS_WEBKIT = flags.IS_WEBKIT; }
+//   };
   // [/DEBUG]
 
   function hasChanged(a, b) {
@@ -751,7 +706,6 @@ import pathDataPolyfill from './path-data-polyfill';
     }
     return t2;
   }
-//   window.getCubicT = getCubicT; // [DEBUG/]
 
   function getOffsetLine(p0, p1, offsetLen) {
     var angle = Math.atan2(p0.y - p1.y, p1.x - p0.x) + Math.PI * 0.5;
@@ -760,7 +714,6 @@ import pathDataPolyfill from './path-data-polyfill';
       {x: p1.x + Math.cos(angle) * offsetLen, y: p1.y + Math.sin(angle) * offsetLen * -1}
     ];
   }
-//   window.getOffsetLine = getOffsetLine; // [DEBUG/]
 
   function getOffsetCubic(p0, p1, p2, p3, offsetLen, stepLen) {
     var parts = getCubicLength(p0, p1, p2, p3) / stepLen,
@@ -780,26 +733,79 @@ import pathDataPolyfill from './path-data-polyfill';
     }
     return points;
   }
-//   window.getOffsetCubic = getOffsetCubic; // [DEBUG/]
 
-  function pathList2PathData(pathList, cbPoint) {
-    var pathData;
-    pathList.forEach(function(pointsOrg) {
-      var points = cbPoint ? pointsOrg.map(function(pointOrg) {
-        var point = {x: pointOrg.x, y: pointOrg.y};
-        cbPoint(point);
-        return point;
-      }) : pointsOrg;
-      // error is thrown if `points` has no data
-      if (!pathData) { pathData = [{type: 'M', values: [points[0].x, points[0].y]}]; }
-      pathData.push(
-        !points.length ? {type: 'Z', values: []} :
-        points.length === 2 ? {type: 'L', values: [points[1].x, points[1].y]} :
-          {type: 'C', values: [points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]});
-    });
-    return pathData;
-  }
-//   window.pathList2PathData = pathList2PathData; // [DEBUG/]
+   function getDirectionChange(before, after) {
+      function getDirection(point1, point2) {
+         if (point1.x !== point2.x) {
+            return (point1.x < point2.x) ? 'right' : 'left';
+         } else {
+            return (point1.y < point2.y) ? 'top' : 'bottom';
+         }
+      }
+
+      let direction1 = getDirection(before[0], before[1]);
+      let direction2 = getDirection(after[0], after[1]);
+
+      return direction1 + "-" + direction2;
+   }
+
+   function pathList2PathData(pathList, cbPoint) {
+      var pathData;
+      //   console.log(pathList);
+      for (let i = 0; i < pathList.length; i++) {
+         const pointsOrg = pathList[i];
+
+         var points = cbPoint ? pointsOrg.map(function (pointOrg) {
+            var point = { x: pointOrg.x, y: pointOrg.y };
+            cbPoint(point);
+            return point;
+         }) : pointsOrg;
+         // error is thrown if `points` has no data
+         if (!pathData) { pathData = [{ type: 'M', values: [points[0].x, points[0].y] }]; }
+
+         if(!points.length){
+            pathData.push({ type: 'Z', values: [] })
+         } else if (points.length === 2) {
+
+            const CORNER_RADIUS = 6;
+            if (i < pathList.length-1) { // add rounded corner
+
+               const dtd = getDirectionChange(pointsOrg,pathList[i+1]);
+
+               // Corner type map
+               const directionMapping = {
+                  'right-top': [[points[1].x - CORNER_RADIUS, points[1].y], [CORNER_RADIUS, CORNER_RADIUS, 0, 0, 1, CORNER_RADIUS, CORNER_RADIUS]],
+                  'bottom-right': [[points[1].x, points[1].y + CORNER_RADIUS], [CORNER_RADIUS, CORNER_RADIUS, 0, 0, 1, CORNER_RADIUS, -CORNER_RADIUS]],
+                  'bottom-left': [[points[1].x, points[1].y + CORNER_RADIUS], [CORNER_RADIUS, CORNER_RADIUS, 0, 0, 0, -CORNER_RADIUS, -CORNER_RADIUS]],
+                  'left-bottom': [[points[1].x + CORNER_RADIUS, points[1].y], [CORNER_RADIUS, CORNER_RADIUS, 0, 0, 1, -CORNER_RADIUS, -CORNER_RADIUS]],
+                  'top-right': [[points[1].x, points[1].y - CORNER_RADIUS], [CORNER_RADIUS, CORNER_RADIUS, 0, 0, 0, CORNER_RADIUS, CORNER_RADIUS]],
+                  'right-bottom': [[points[1].x - CORNER_RADIUS, points[1].y], [CORNER_RADIUS, CORNER_RADIUS, 0, 0, 0, CORNER_RADIUS, -CORNER_RADIUS]],
+                  'left-top': [[points[1].x + CORNER_RADIUS, points[1].y], [CORNER_RADIUS, CORNER_RADIUS, 0, 0, 0, -CORNER_RADIUS, CORNER_RADIUS]],
+                  'top-left': [[points[1].x, points[1].y - CORNER_RADIUS], [CORNER_RADIUS, CORNER_RADIUS, 0, 0, 1, -CORNER_RADIUS, CORNER_RADIUS]]
+               };
+
+               // Use mapping object instead of switch-case
+               if(directionMapping[dtd]) {
+                  pathData.push({ type: 'L', values: directionMapping[dtd][0] });
+                  pathData.push({ type: 'a', values: directionMapping[dtd][1] });
+               } else {
+                  console.log('undefined dir ' + dtd);
+                  pathData.push({ type: 'L', values: [points[1].x, points[1].y] });
+               }
+
+            } else {
+               pathData.push({
+                  type: 'L', values: [points[1].x, points[1].y]
+               });
+            }
+         } else {
+            pathData.push({
+               type: 'C', values: [points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]
+            });
+         }
+      };
+      return pathData;
+   }
 
   function getAllPathListLen(pathList) {
     var pathSegsLen = [], pathLenAll = 0;
@@ -964,50 +970,6 @@ import pathDataPolyfill from './path-data-polyfill';
       orient: !symbolConf ? null : symbolConf.noRotate ? '0' : i ? 'auto' : 'auto-start-reverse'
     };
   }
-
-  /**
-   * @param {Document} document - document
-   * @param {string} id - id
-   * @returns {Object} {elmFilter, elmOffset, elmBlur, styleFlood, elmsAppend}
-   */
-  function newDropShadow(document, id) {
-    var dropShadow = {}, filter, element;
-
-    if (typeof svg2SupportedDropShadow !== 'boolean') {
-      // [WEBKIT] stdDeviation has bug
-      svg2SupportedDropShadow = !!window.SVGFEDropShadowElement && !IS_WEBKIT;
-    }
-
-    dropShadow.elmsAppend = [(dropShadow.elmFilter = filter = document.createElementNS(SVG_NS, 'filter'))];
-    // sizing for GECKO and TRIDENT
-    filter.filterUnits.baseVal = SVGUnitTypes.SVG_UNIT_TYPE_USERSPACEONUSE;
-    filter.x.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
-    filter.y.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
-    filter.width.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
-    filter.height.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PERCENTAGE, 100);
-    filter.id = id;
-
-    if (svg2SupportedDropShadow) {
-      dropShadow.elmOffset = dropShadow.elmBlur =
-        (element = filter.appendChild(document.createElementNS(SVG_NS, 'feDropShadow')));
-      dropShadow.styleFlood = element.style;
-
-    } else {
-      dropShadow.elmBlur = filter.appendChild(document.createElementNS(SVG_NS, 'feGaussianBlur'));
-      dropShadow.elmOffset = element = filter.appendChild(document.createElementNS(SVG_NS, 'feOffset'));
-      element.result.baseVal = 'offsetblur';
-      element = filter.appendChild(document.createElementNS(SVG_NS, 'feFlood'));
-      dropShadow.styleFlood = element.style;
-      element = filter.appendChild(document.createElementNS(SVG_NS, 'feComposite'));
-      element.in2.baseVal = 'offsetblur';
-      element.operator.baseVal = SVGFECompositeElement.SVG_FECOMPOSITE_OPERATOR_IN;
-      element = filter.appendChild(document.createElementNS(SVG_NS, 'feMerge'));
-      element.appendChild(document.createElementNS(SVG_NS, 'feMergeNode'));
-      element.appendChild(document.createElementNS(SVG_NS, 'feMergeNode')).in1.baseVal = 'SourceGraphic';
-    }
-    return dropShadow;
-  }
-//   window.newDropShadow = newDropShadow; // [DEBUG/]
 
   function initStats(container, statsConf) {
     Object.keys(statsConf).forEach(function(statName) {
@@ -1764,24 +1726,6 @@ import pathDataPolyfill from './path-data-polyfill';
       }
     })();
 
-    // [DEBUG]
-    // if (curStats.position_path !== aplStats.position_path) { traceLog.add('position_path'); }
-    // if (curStats.position_lineStrokeWidth !== aplStats.position_lineStrokeWidth) {
-    //   traceLog.add('position_lineStrokeWidth');
-    // }
-    // [0, 1].forEach(function(i) {
-    //   if (curStats.position_plugOverheadSE[i] !== aplStats.position_plugOverheadSE[i]) {
-    //     traceLog.add('position_plugOverheadSE[' + i + ']');
-    //   }
-    //   if (socketXYHasChanged(curSocketXYSE[i], aplStats.position_socketXYSE[i])) {
-    //     traceLog.add('position_socketXYSE[' + i + ']');
-    //   }
-    //   if (socketGravityHasChanged(curSocketGravitySE[i], aplStats.position_socketGravitySE[i])) {
-    //     traceLog.add('position_socketGravitySE[' + i + ']');
-    //   }
-    // });
-    // [/DEBUG]
-
     if (curStats.position_path !== aplStats.position_path ||
         curStats.position_lineStrokeWidth !== aplStats.position_lineStrokeWidth ||
         [0, 1].some(function(i) {
@@ -1790,7 +1734,6 @@ import pathDataPolyfill from './path-data-polyfill';
             socketGravityHasChanged(curSocketGravitySE[i], aplStats.position_socketGravitySE[i]);
         })) {
       // New position
-    //   traceLog.add('new-position'); // [DEBUG/]
       props.pathList.baseVal = pathList = [];
       props.pathList.animVal = null;
 
@@ -1801,30 +1744,8 @@ import pathDataPolyfill from './path-data-polyfill';
           pathList.push([socketXY2Point(curSocketXYSE[0]), socketXY2Point(curSocketXYSE[1])]);
           break;
 
-        case PATH_ARC:
-          (function() {
-            var
-              downward =
-                typeof curSocketGravitySE[0] === 'number' && curSocketGravitySE[0] > 0 ||
-                typeof curSocketGravitySE[1] === 'number' && curSocketGravitySE[1] > 0,
-              circle8rad = CIRCLE_8_RAD * (downward ? -1 : 1),
-              angle = Math.atan2(curSocketXYSE[1].y - curSocketXYSE[0].y, curSocketXYSE[1].x - curSocketXYSE[0].x),
-              cp1Angle = -angle + circle8rad,
-              cp2Angle = Math.PI - angle - circle8rad,
-              crLen = getPointsLength(curSocketXYSE[0], curSocketXYSE[1]) / Math.sqrt(2) * CIRCLE_CP,
-              cp1 = {
-                x: curSocketXYSE[0].x + Math.cos(cp1Angle) * crLen,
-                y: curSocketXYSE[0].y + Math.sin(cp1Angle) * crLen * -1},
-              cp2 = {
-                x: curSocketXYSE[1].x + Math.cos(cp2Angle) * crLen,
-                y: curSocketXYSE[1].y + Math.sin(cp2Angle) * crLen * -1};
-            pathList.push([socketXY2Point(curSocketXYSE[0]), cp1, cp2, socketXY2Point(curSocketXYSE[1])]);
-          })();
-          break;
-
         case PATH_FLUID:
-        case PATH_MAGNET:
-          (/* @EXPORT[file:../test/spec/func/PATH_FLUID]@ */function(socketGravitySE) {
+          (function(socketGravitySE) {
             var cx = [], cy = [];
             curSocketXYSE.forEach(function(socketXY, i) {
               var gravity = socketGravitySE[i], offset, anotherSocketXY, overhead, minGravity, len;
@@ -1867,18 +1788,14 @@ import pathDataPolyfill from './path-data-polyfill';
             });
             pathList.push([socketXY2Point(curSocketXYSE[0]),
               {x: cx[0], y: cy[0]}, {x: cx[1], y: cy[1]}, socketXY2Point(curSocketXYSE[1])]);
-          }/* @/EXPORT@ */)([curSocketGravitySE[0],
-            curStats.position_path === PATH_MAGNET ? 0 : curSocketGravitySE[1]]);
-          break;
+          })(
+            [curSocketGravitySE[0],curSocketGravitySE[1]]
+         );
+         break;
 
         case PATH_GRID:
-          (/* @EXPORT[file:../test/spec/func/PATH_GRID]@ */function() {
-            /**
-             * @typedef {Object} DirPoint
-             * @property {number} dirId - DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT
-             * @property {number} x
-             * @property {number} y
-             */
+          (function() {
+
             var
               DIR_UP = 1, DIR_RIGHT = 2, DIR_DOWN = 3, DIR_LEFT = 4, // Correspond with `socketId`
               dpList = [[], []], curDirPoint = [], curPoint;
@@ -2058,14 +1975,13 @@ import pathDataPolyfill from './path-data-polyfill';
               curDirPoint[i] = getNextDirPoint(dirPoint, len);
             });
             while (joinPoints()) { /* empty */ }
-
             dpList[1].reverse();
             dpList[0].concat(dpList[1]).forEach(function(dirPoint, i) {
               var point = {x: dirPoint.x, y: dirPoint.y};
               if (i > 0) { pathList.push([curPoint, point]); }
               curPoint = point;
             });
-          }/* @/EXPORT@ */)();
+          })();
           break;
 
         // no default
@@ -2142,6 +2058,7 @@ import pathDataPolyfill from './path-data-polyfill';
         });
       })();
 
+
       // apply
       aplStats.position_socketXYSE = copyTree(curSocketXYSE);
       aplStats.position_plugOverheadSE = copyTree(curStats.position_plugOverheadSE);
@@ -2149,14 +2066,12 @@ import pathDataPolyfill from './path-data-polyfill';
       aplStats.position_lineStrokeWidth = curStats.position_lineStrokeWidth;
       aplStats.position_socketGravitySE = copyTree(curSocketGravitySE);
       updated = true;
-
+    //   console.log(aplStats);
       if (props.events.apl_position) {
         props.events.apl_position.forEach(function(handler) { handler(props, pathList); });
       }
     }
 
-    // if (!updated) { traceLog.add('not-updated'); } // [DEBUG/]
-    // traceLog.add('</updatePosition>'); // [DEBUG/]
     return updated;
   }
 
@@ -2165,7 +2080,6 @@ import pathDataPolyfill from './path-data-polyfill';
    * @returns {boolean} `true` if it was changed.
    */
   function updatePath(props) {
-    // traceLog.add('<updatePath>'); // [DEBUG/]
     var curStats = props.curStats, aplStats = props.aplStats,
       pathList = props.pathList.animVal || props.pathList.baseVal,
       curPathData, curEdge = curStats.path_edge,
@@ -2529,14 +2443,6 @@ import pathDataPolyfill from './path-data-polyfill';
       forceReflowAdd(props, props.plugsFace);
     }
     forceReflowApply(props);
-
-    // [DEBUG]
-    // traceLog.add('<update>');
-    // Object.keys(updated).forEach(function(key) {
-    //   if (updated[key]) { traceLog.add('updated.' + key); }
-    // });
-    // traceLog.add('</update>');
-    // [/DEBUG]
   }
 
   function getValidAnimOptions(animOptions, defaultAnimOptions) {
@@ -3156,119 +3062,6 @@ import pathDataPolyfill from './path-data-polyfill';
         // traceLog.add('</EFFECTS.gradient.update>'); // [DEBUG/]
       }
     },
-
-    dropShadow: {
-      stats: {dropShadow_dx: {}, dropShadow_dy: {}, dropShadow_blur: {},
-        dropShadow_color: {}, dropShadow_opacity: {}, dropShadow_x: {}, dropShadow_y: {}},
-
-      optionsConf: [
-        ['type', 'dx', null, null, null, 2],
-        ['type', 'dy', null, null, null, 4],
-        ['type', 'blur', null, null, null, 3, function(value) { return value >= 0; }],
-        ['type', 'color', null, null, null, '#000', null, true],
-        ['type', 'opacity', null, null, null, 0.8, function(value) { return value >= 0 && value <= 1; }]
-      ],
-
-      init: function(props) {
-        // traceLog.add('<EFFECTS.dropShadow.init>'); // [DEBUG/]
-        var baseDocument = props.baseWindow.document, defs = props.defs,
-          id = APP_ID + '-' + props._id + '-dropShadow',
-          dropShadow = newDropShadow(baseDocument, id);
-
-        ['elmFilter', 'elmOffset', 'elmBlur', 'styleFlood', 'elmsAppend']
-          .forEach(function(key) { props['efc_dropShadow_' + key] = dropShadow[key]; });
-
-        dropShadow.elmsAppend.forEach(function(elm) { defs.appendChild(elm); });
-        props.face.setAttribute('filter', 'url(#' + id + ')');
-
-        addEventHandler(props, 'new_edge4viewBox', EFFECTS.dropShadow.adjustEdge);
-        EFFECTS.dropShadow.update(props);
-        // traceLog.add('</EFFECTS.dropShadow.init>'); // [DEBUG/]
-      },
-
-      remove: function(props) {
-        // traceLog.add('<EFFECTS.dropShadow.remove>'); // [DEBUG/]
-        var defs = props.defs;
-        if (props.efc_dropShadow_elmsAppend) {
-          props.efc_dropShadow_elmsAppend.forEach(function(elm) { defs.removeChild(elm); });
-          props.efc_dropShadow_elmFilter = props.efc_dropShadow_elmOffset = props.efc_dropShadow_elmBlur =
-            props.efc_dropShadow_styleFlood = props.efc_dropShadow_elmsAppend = null;
-        }
-
-        removeEventHandler(props, 'new_edge4viewBox', EFFECTS.dropShadow.adjustEdge);
-        update(props, {}); // To call updateViewBox()
-        props.face.removeAttribute('filter');
-        initStats(props.aplStats, EFFECTS.dropShadow.stats);
-        // traceLog.add('</EFFECTS.dropShadow.remove>'); // [DEBUG/]
-      },
-
-      update: function(props) {
-        // traceLog.add('<EFFECTS.dropShadow.update>'); // [DEBUG/]
-        var curStats = props.curStats, aplStats = props.aplStats,
-          effectOptions = aplStats.dropShadow_options,
-          value, updateBBox;
-
-        curStats.dropShadow_dx = value = effectOptions.dx;
-        if (setStat(props, aplStats, 'dropShadow_dx', value)) {
-          props.efc_dropShadow_elmOffset.dx.baseVal = value;
-          updateBBox = true;
-        }
-
-        curStats.dropShadow_dy = value = effectOptions.dy;
-        if (setStat(props, aplStats, 'dropShadow_dy', value)) {
-          props.efc_dropShadow_elmOffset.dy.baseVal = value;
-          updateBBox = true;
-        }
-
-        curStats.dropShadow_blur = value = effectOptions.blur;
-        if (setStat(props, aplStats, 'dropShadow_blur', value)) {
-          props.efc_dropShadow_elmBlur.setStdDeviation(value, value);
-          updateBBox = true;
-        }
-
-        if (updateBBox) { update(props, {}); } // To call updateViewBox()
-
-        curStats.dropShadow_color = value = effectOptions.color;
-        if (setStat(props, aplStats, 'dropShadow_color', value)) {
-          props.efc_dropShadow_styleFlood.floodColor = value;
-        }
-
-        curStats.dropShadow_opacity = value = effectOptions.opacity;
-        if (setStat(props, aplStats, 'dropShadow_opacity', value)) {
-          props.efc_dropShadow_styleFlood.floodOpacity = value;
-        }
-
-        // traceLog.add('</EFFECTS.dropShadow.update>'); // [DEBUG/]
-      },
-
-      adjustEdge: function(props, edge) {
-        // traceLog.add('<EFFECTS.dropShadow.adjustEdge>'); // [DEBUG/]
-        var curStats = props.curStats, aplStats = props.aplStats, margin, shadowEdge;
-        if (curStats.dropShadow_dx != null) {
-          margin = curStats.dropShadow_blur * 3; // nearly standard deviation
-          shadowEdge = {
-            x1: edge.x1 - margin + curStats.dropShadow_dx,
-            y1: edge.y1 - margin + curStats.dropShadow_dy,
-            x2: edge.x2 + margin + curStats.dropShadow_dx,
-            y2: edge.y2 + margin + curStats.dropShadow_dy
-          };
-          if (shadowEdge.x1 < edge.x1) { edge.x1 = shadowEdge.x1; }
-          if (shadowEdge.y1 < edge.y1) { edge.y1 = shadowEdge.y1; }
-          if (shadowEdge.x2 > edge.x2) { edge.x2 = shadowEdge.x2; }
-          if (shadowEdge.y2 > edge.y2) { edge.y2 = shadowEdge.y2; }
-
-          // position filter
-          ['x', 'y'].forEach(function(boxKey) {
-            var statKey = 'dropShadow_' + boxKey, value;
-            curStats[statKey] = value = edge[boxKey + '1'];
-            if (setStat(props, aplStats, statKey, value)) {
-              props.efc_dropShadow_elmFilter[boxKey].baseVal.value = value;
-            }
-          });
-        }
-        // traceLog.add('</EFFECTS.dropShadow.adjustEdge>'); // [DEBUG/]
-      }
-    }
   };
 //   window.EFFECTS = EFFECTS; // [DEBUG/]
 
@@ -3756,7 +3549,6 @@ import pathDataPolyfill from './path-data-polyfill';
     }
 
     LeaderLineAttachment.prototype.remove = function() {
-    //   traceLog.add('<LeaderLineAttachment.remove>'); // [DEBUG/]
       var that = this, attachProps = insAttachProps[that._id];
       if (attachProps) {
         attachProps.boundTargets.slice().forEach( // Copy boundTargets because removeOption may change array.
@@ -3764,16 +3556,11 @@ import pathDataPolyfill from './path-data-polyfill';
 
         addDelayedProc(function() {
           var attachProps = insAttachProps[that._id];
-        //   traceLog.add('<LeaderLineAttachment.remove.delayedProc>'); // [DEBUG/]
           if (attachProps) { // it should be removed by unbinding all
-            // traceLog.add('error-not-removed'); // [DEBUG/]
-            console.error('LeaderLineAttachment was not removed by removeOption');
             removeAttachment(attachProps); // force
           }
-        //   traceLog.add('</LeaderLineAttachment.remove.delayedProc>'); // [DEBUG/]
         });
       }
-    //   traceLog.add('</LeaderLineAttachment.remove>'); // [DEBUG/]
     };
 
     return LeaderLineAttachment;
@@ -3866,688 +3653,6 @@ import pathDataPolyfill from './path-data-polyfill';
       }
     },
 
-    areaAnchor: {
-      type: 'anchor',
-      argOptions: [{optionName: 'element', type: isElement}, {optionName: 'shape', type: 'string'}],
-      stats: {color: {}, strokeWidth: {}, elementWidth: {}, elementHeight: {}, elementLeft: {}, elementTop: {},
-        pathListRel: {}, bBoxRel: {}, pathData: {}, viewBoxBBox: {hasProps: true}, dashLen: {}, dashGap: {}},
-
-      // attachOptions: element, color(A), fillColor, size(A), dash, shape, x, y, width, height, radius, points
-      init: function(attachProps, attachOptions) {
-        // traceLog.add('<ATTACHMENTS.areaAnchor.init>'); // [DEBUG/]
-        var points = [], baseDocument, svg, window;
-        attachProps.element = ATTACHMENTS.pointAnchor.checkElement(attachOptions.element);
-        if (typeof attachOptions.color === 'string') {
-          attachProps.color = attachOptions.color.trim();
-        }
-        if (typeof attachOptions.fillColor === 'string') {
-          attachProps.fill = attachOptions.fillColor.trim();
-        }
-        if (isFinite(attachOptions.size) && attachOptions.size >= 0) {
-          attachProps.size = attachOptions.size;
-        }
-        if (attachOptions.dash) {
-          attachProps.dash = true;
-          if (isFinite(attachOptions.dash.len) && attachOptions.dash.len > 0) {
-            attachProps.dashLen = attachOptions.dash.len;
-          }
-          if (isFinite(attachOptions.dash.gap) && attachOptions.dash.gap > 0) {
-            attachProps.dashGap = attachOptions.dash.gap;
-          }
-        }
-
-        if (attachOptions.shape === 'circle') {
-          attachProps.shape = attachOptions.shape;
-        } else if (attachOptions.shape === 'polygon' &&
-            Array.isArray(attachOptions.points) && attachOptions.points.length >= 3 &&
-            attachOptions.points.every(function(point) {
-              var validPoint = {};
-              if ((validPoint.x = ATTACHMENTS.pointAnchor.parsePercent(point[0], true)) &&
-                  (validPoint.y = ATTACHMENTS.pointAnchor.parsePercent(point[1], true))) {
-                points.push(validPoint);
-                if (validPoint.x[1] || validPoint.y[1]) { attachProps.hasRatio = true; }
-                return true;
-              }
-              return false;
-            })) {
-          attachProps.shape = attachOptions.shape;
-          attachProps.points = points;
-        } else {
-          attachProps.shape = 'rect';
-          attachProps.radius =
-            isFinite(attachOptions.radius) && attachOptions.radius >= 0 ? attachOptions.radius : 0;
-        }
-
-        if (attachProps.shape === 'rect' || attachProps.shape === 'circle') {
-          attachProps.x = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.x, true) || [-0.05, true];
-          attachProps.y = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.y, true) || [-0.05, true];
-          attachProps.width = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.width) || [1.1, true];
-          attachProps.height = ATTACHMENTS.pointAnchor.parsePercent(attachOptions.height) || [1.1, true];
-          if (attachProps.x[1] || attachProps.y[1] ||
-            attachProps.width[1] || attachProps.height[1]) { attachProps.hasRatio = true; }
-        }
-
-        // SVG
-        baseDocument = attachProps.element.ownerDocument;
-        attachProps.svg = svg = baseDocument.createElementNS(SVG_NS, 'svg');
-        svg.className.baseVal = APP_ID + '-areaAnchor';
-        if (!svg.viewBox.baseVal) { svg.setAttribute('viewBox', '0 0 0 0'); } // for Firefox bug
-        attachProps.path = svg.appendChild(baseDocument.createElementNS(SVG_NS, 'path'));
-        attachProps.path.style.fill = attachProps.fill || 'none';
-        attachProps.isShown = false;
-        svg.style.visibility = 'hidden';
-        baseDocument.body.appendChild(svg);
-        setupWindow((window = baseDocument.defaultView));
-        attachProps.bodyOffset = getBodyOffset(window); // Get `bodyOffset`
-
-        // event handler for this instance
-        attachProps.updateColor = function() {
-        //   traceLog.add('<ATTACHMENTS.areaAnchor.updateColor>'); // [DEBUG/]
-          var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-            llStats = attachProps.boundTargets.length ? attachProps.boundTargets[0].props.curStats : null,
-            value;
-
-          curStats.color = value = attachProps.color || (llStats ? llStats.line_color : DEFAULT_OPTIONS.lineColor);
-          if (setStat(attachProps, aplStats, 'color', value)) {
-            attachProps.path.style.stroke = value;
-          }
-        //   traceLog.add('</ATTACHMENTS.areaAnchor.updateColor>'); // [DEBUG/]
-        };
-
-        attachProps.updateShow = function() {
-          svgShow(attachProps, attachProps.boundTargets.some(
-            function(boundTarget) { return boundTarget.props.isShown === true; }));
-        };
-        // event handler to update `strokeWidth` is unnecessary
-        // because `getStrokeWidth` is triggered by `updateLine` and `updatePosition`
-
-        // traceLog.add('</ATTACHMENTS.areaAnchor.init>'); // [DEBUG/]
-        return true;
-      },
-
-      bind: function(attachProps, bindTarget) {
-        // traceLog.add('<ATTACHMENTS.areaAnchor.bind>'); // [DEBUG/]
-        var props = bindTarget.props;
-        if (!attachProps.color) { addEventHandler(props, 'cur_line_color', attachProps.updateColor); }
-        addEventHandler(props, 'svgShow', attachProps.updateShow);
-        addDelayedProc(function() { // after updating `attachProps.boundTargets`
-          attachProps.updateColor();
-          attachProps.updateShow();
-        });
-        // traceLog.add('</ATTACHMENTS.areaAnchor.bind>'); // [DEBUG/]
-        return true;
-      },
-
-      unbind: function(attachProps, boundTarget) {
-        // traceLog.add('<ATTACHMENTS.areaAnchor.unbind>'); // [DEBUG/]
-        var props = boundTarget.props;
-        if (!attachProps.color) { removeEventHandler(props, 'cur_line_color', attachProps.updateColor); }
-        removeEventHandler(props, 'svgShow', attachProps.updateShow);
-
-        if (attachProps.boundTargets.length > 1) { // It's not removed yet.
-          addDelayedProc(function() { // after updating `attachProps.boundTargets`
-            // traceLog.add('<ATTACHMENTS.areaAnchor.unbind.delayedProc>'); // [DEBUG/]
-            attachProps.updateColor();
-            attachProps.updateShow();
-            if (ATTACHMENTS.areaAnchor.update(attachProps)) { // it's not called by unbound ll
-            //   traceLog.add('update-boundTargets'); // [DEBUG/]
-              attachProps.boundTargets.forEach(function(boundTarget) { // Update other instances.
-                update(boundTarget.props, {position: true});
-              });
-            }
-            // traceLog.add('</ATTACHMENTS.areaAnchor.unbind.delayedProc>'); // [DEBUG/]
-          });
-        }
-        // traceLog.add('</ATTACHMENTS.areaAnchor.unbind>'); // [DEBUG/]
-      },
-
-      removeOption: function(attachProps, boundTarget) {
-        ATTACHMENTS.pointAnchor.removeOption(attachProps, boundTarget);
-      },
-
-      remove: function(attachProps) {
-        // traceLog.add('<ATTACHMENTS.areaAnchor.remove>'); // [DEBUG/]
-        if (attachProps.boundTargets.length) { // it should be unbound by LeaderLineAttachment.remove
-        //   traceLog.add('error-not-unbound'); // [DEBUG/]
-          console.error('LeaderLineAttachment was not unbound by remove');
-          attachProps.boundTargets.forEach(
-            function(boundTarget) { ATTACHMENTS.areaAnchor.unbind(attachProps, boundTarget); });
-        }
-        attachProps.svg.parentNode.removeChild(attachProps.svg);
-        // traceLog.add('</ATTACHMENTS.areaAnchor.remove>'); // [DEBUG/]
-      },
-
-      getStrokeWidth: function(attachProps, props) {
-        // traceLog.add('<ATTACHMENTS.areaAnchor.getStrokeWidth>'); // [DEBUG/]
-        if (ATTACHMENTS.areaAnchor.update(attachProps) && attachProps.boundTargets.length > 1) {
-        //   traceLog.add('update-boundTargets'); // [DEBUG/]
-          addDelayedProc(function() {
-            attachProps.boundTargets.forEach(function(boundTarget) { // Update other instances.
-              if (boundTarget.props !== props) { update(boundTarget.props, {position: true}); }
-            });
-          });
-        }
-        // traceLog.add('</ATTACHMENTS.areaAnchor.getStrokeWidth>'); // [DEBUG/]
-        return attachProps.curStats.strokeWidth;
-      },
-
-      getPathData: function(attachProps, props) {
-        var bBox = getBBoxNest(attachProps.element, props.baseWindow);
-        return pathList2PathData(attachProps.curStats.pathListRel, function(point) {
-          point.x += bBox.left;
-          point.y += bBox.top;
-        });
-      },
-
-      getBBoxNest: function(attachProps, props) {
-        var bBox = getBBoxNest(attachProps.element, props.baseWindow),
-          bBoxRel = attachProps.curStats.bBoxRel;
-        return {
-          left: bBoxRel.left + bBox.left,
-          top: bBoxRel.top + bBox.top,
-          right: bBoxRel.right + bBox.left,
-          bottom: bBoxRel.bottom + bBox.top,
-          width: bBoxRel.width,
-          height: bBoxRel.height
-        };
-      },
-
-      update: function(attachProps) {
-        // traceLog.add('<ATTACHMENTS.areaAnchor.update>'); // [DEBUG/]
-        var curStats = attachProps.curStats, aplStats = attachProps.aplStats,
-          llStats = attachProps.boundTargets.length ? attachProps.boundTargets[0].props.curStats : null,
-          elementBBox, value, updated = {};
-
-        updated.strokeWidth = setStat(attachProps, curStats, 'strokeWidth',
-          attachProps.size != null ? attachProps.size :
-            (llStats ? llStats.line_strokeWidth : DEFAULT_OPTIONS.lineSize));
-
-        elementBBox = getBBox(attachProps.element);
-        updated.elementWidth = setStat(attachProps, curStats, 'elementWidth', elementBBox.width);
-        updated.elementHeight = setStat(attachProps, curStats, 'elementHeight', elementBBox.height);
-        updated.elementLeft = setStat(attachProps, curStats, 'elementLeft', elementBBox.left);
-        updated.elementTop = setStat(attachProps, curStats, 'elementTop', elementBBox.top);
-
-        if (updated.strokeWidth ||
-            attachProps.hasRatio && (updated.elementWidth || updated.elementHeight)) { // generate path
-        //   traceLog.add('generate-path'); // [DEBUG/]
-          switch (attachProps.shape) {
-
-            case 'rect':
-              (function() {
-                var areaBBox, radius, maxRadius, side, strokePadding, offsetC, padding, points, cpR;
-                areaBBox = {
-                  left: attachProps.x[0] * (attachProps.x[1] ? elementBBox.width : 1),
-                  top: attachProps.y[0] * (attachProps.y[1] ? elementBBox.height : 1),
-                  width: attachProps.width[0] * (attachProps.width[1] ? elementBBox.width : 1),
-                  height: attachProps.height[0] * (attachProps.height[1] ? elementBBox.height : 1)
-                };
-                areaBBox.right = areaBBox.left + areaBBox.width;
-                areaBBox.bottom = areaBBox.top + areaBBox.height;
-
-                strokePadding = curStats.strokeWidth / 2;
-                maxRadius = (side = Math.min(areaBBox.width, areaBBox.height)) ?
-                  side / 2 * Math.SQRT2 + strokePadding : 0;
-                radius = !attachProps.radius ? 0 :
-                  attachProps.radius <= maxRadius ? attachProps.radius : maxRadius;
-                if (radius) {
-                  offsetC = (radius - strokePadding) / Math.SQRT2;
-                  padding = radius - offsetC;
-                  cpR = radius * CIRCLE_CP;
-
-                  points = [
-                    {x: areaBBox.left - padding, y: areaBBox.top + offsetC}, // 0 left-top-start
-                    {x: areaBBox.left + offsetC, y: areaBBox.top - padding}, // 1 left-top-end
-                    {x: areaBBox.right - offsetC, y: areaBBox.top - padding}, // 2 right-top-start
-                    {x: areaBBox.right + padding, y: areaBBox.top + offsetC}, // 3 right-top-end
-                    {x: areaBBox.right + padding, y: areaBBox.bottom - offsetC}, // 4 right-bottom-start
-                    {x: areaBBox.right - offsetC, y: areaBBox.bottom + padding}, // 5 right-bottom-end
-                    {x: areaBBox.left + offsetC, y: areaBBox.bottom + padding}, // 6 left-bottom-start
-                    {x: areaBBox.left - padding, y: areaBBox.bottom - offsetC} // 7 left-bottom-end
-                  ];
-                  curStats.pathListRel = [[points[0], {x: points[0].x, y: points[0].y - cpR},
-                    {x: points[1].x - cpR, y: points[1].y}, points[1]]];
-                  if (points[1].x !== points[2].x) { curStats.pathListRel.push([points[1], points[2]]); }
-                  curStats.pathListRel.push([points[2], {x: points[2].x + cpR, y: points[2].y},
-                    {x: points[3].x, y: points[3].y - cpR}, points[3]]);
-                  if (points[3].y !== points[4].y) { curStats.pathListRel.push([points[3], points[4]]); }
-                  curStats.pathListRel.push([points[4], {x: points[4].x, y: points[4].y + cpR},
-                    {x: points[5].x + cpR, y: points[5].y}, points[5]]);
-                  if (points[5].x !== points[6].x) { curStats.pathListRel.push([points[5], points[6]]); }
-                  curStats.pathListRel.push([points[6], {x: points[6].x - cpR, y: points[6].y},
-                    {x: points[7].x, y: points[7].y + cpR}, points[7]]);
-                  if (points[7].y !== points[0].y) { curStats.pathListRel.push([points[7], points[0]]); }
-                  curStats.pathListRel.push([]);
-
-                  padding = radius - offsetC + curStats.strokeWidth / 2;
-                  points = [{x: areaBBox.left - padding, y: areaBBox.top - padding}, // left-top
-                    {x: areaBBox.right + padding, y: areaBBox.bottom + padding}]; // right-bottom
-                  curStats.bBoxRel = {
-                    left: points[0].x, top: points[0].y, right: points[1].x, bottom: points[1].y,
-                    width: points[1].x - points[0].x, height: points[1].y - points[0].y
-                  };
-
-                } else {
-                  padding = curStats.strokeWidth / 2;
-                  points = [{x: areaBBox.left - padding, y: areaBBox.top - padding}, // left-top
-                    {x: areaBBox.right + padding, y: areaBBox.bottom + padding}]; // right-bottom
-                  curStats.pathListRel = [
-                    [points[0], {x: points[1].x, y: points[0].y}],
-                    [{x: points[1].x, y: points[0].y}, points[1]],
-                    [points[1], {x: points[0].x, y: points[1].y}],
-                    []
-                  ];
-
-                  points = [{x: areaBBox.left - curStats.strokeWidth,
-                      y: areaBBox.top - curStats.strokeWidth}, // left-top
-                    {x: areaBBox.right + curStats.strokeWidth,
-                      y: areaBBox.bottom + curStats.strokeWidth}]; // right-bottom
-                  curStats.bBoxRel = {
-                    left: points[0].x, top: points[0].y, right: points[1].x, bottom: points[1].y,
-                    width: points[1].x - points[0].x, height: points[1].y - points[0].y
-                  };
-                }
-              })();
-              break;
-
-            case 'circle':
-              (function() {
-                var areaBBox, cx, cy, radiusX, radiusY, cpRX, cpRY,
-                  strokePadding, offsetCX, offsetCY, paddingX, paddingY, points;
-                areaBBox = {
-                  left: attachProps.x[0] * (attachProps.x[1] ? elementBBox.width : 1),
-                  top: attachProps.y[0] * (attachProps.y[1] ? elementBBox.height : 1),
-                  width: attachProps.width[0] * (attachProps.width[1] ? elementBBox.width : 1),
-                  height: attachProps.height[0] * (attachProps.height[1] ? elementBBox.height : 1)
-                };
-                if (!areaBBox.width && !areaBBox.height) {
-                  areaBBox.width = areaBBox.height = 10; // values are required
-                } if (!areaBBox.width) {
-                  areaBBox.width = areaBBox.height;
-                } if (!areaBBox.height) {
-                  areaBBox.height = areaBBox.width;
-                }
-                areaBBox.right = areaBBox.left + areaBBox.width;
-                areaBBox.bottom = areaBBox.top + areaBBox.height;
-
-                cx = areaBBox.left + areaBBox.width / 2;
-                cy = areaBBox.top + areaBBox.height / 2;
-                strokePadding = curStats.strokeWidth / 2;
-                offsetCX = areaBBox.width / 2;
-                offsetCY = areaBBox.height / 2;
-                radiusX = offsetCX * Math.SQRT2 + strokePadding;
-                radiusY = offsetCY * Math.SQRT2 + strokePadding;
-                cpRX = radiusX * CIRCLE_CP;
-                cpRY = radiusY * CIRCLE_CP;
-
-                points = [
-                  {x: cx - radiusX, y: cy}, // 0 left
-                  {x: cx, y: cy - radiusY}, // 1 top
-                  {x: cx + radiusX, y: cy}, // 2 right
-                  {x: cx, y: cy + radiusY} // 3 bottom
-                ];
-                curStats.pathListRel = [
-                  [points[0], {x: points[0].x, y: points[0].y - cpRY},
-                    {x: points[1].x - cpRX, y: points[1].y}, points[1]],
-                  [points[1], {x: points[1].x + cpRX, y: points[1].y},
-                    {x: points[2].x, y: points[2].y - cpRY}, points[2]],
-                  [points[2], {x: points[2].x, y: points[2].y + cpRY},
-                    {x: points[3].x + cpRX, y: points[3].y}, points[3]],
-                  [points[3], {x: points[3].x - cpRX, y: points[3].y},
-                    {x: points[0].x, y: points[0].y + cpRY}, points[0]],
-                  []
-                ];
-
-                paddingX = radiusX - offsetCX + curStats.strokeWidth / 2;
-                paddingY = radiusY - offsetCY + curStats.strokeWidth / 2;
-                points = [{x: areaBBox.left - paddingX, y: areaBBox.top - paddingY}, // left-top
-                  {x: areaBBox.right + paddingX, y: areaBBox.bottom + paddingY}]; // right-bottom
-                curStats.bBoxRel = {
-                  left: points[0].x, top: points[0].y, right: points[1].x, bottom: points[1].y,
-                  width: points[1].x - points[0].x, height: points[1].y - points[0].y
-                };
-              })();
-              break;
-
-            case 'polygon':
-              (function() {
-                var areaBBox, curPoint, padding, points;
-                attachProps.points.forEach(function(point) {
-                  var x = point.x[0] * (point.x[1] ? elementBBox.width : 1),
-                    y = point.y[0] * (point.y[1] ? elementBBox.height : 1);
-                  if (areaBBox) {
-                    if (x < areaBBox.left) { areaBBox.left = x; }
-                    if (x > areaBBox.right) { areaBBox.right = x; }
-                    if (y < areaBBox.top) { areaBBox.top = y; }
-                    if (y > areaBBox.bottom) { areaBBox.bottom = y; }
-                  } else {
-                    areaBBox = {left: x, right: x, top: y, bottom: y};
-                  }
-
-                  if (curPoint) {
-                    curStats.pathListRel.push([curPoint, {x: x, y: y}]);
-                  } else {
-                    curStats.pathListRel = [];
-                  }
-                  curPoint = {x: x, y: y};
-                });
-                curStats.pathListRel.push([]);
-
-                padding = curStats.strokeWidth / 2;
-                points = [{x: areaBBox.left - padding, y: areaBBox.top - padding}, // left-top
-                  {x: areaBBox.right + padding, y: areaBBox.bottom + padding}]; // right-bottom
-                curStats.bBoxRel = {
-                  left: points[0].x, top: points[0].y, right: points[1].x, bottom: points[1].y,
-                  width: points[1].x - points[0].x, height: points[1].y - points[0].y
-                };
-              })();
-              break;
-
-            // no default
-          }
-          updated.pathListRel = updated.bBoxRel = true;
-        }
-        if (updated.pathListRel || updated.elementLeft || updated.elementTop) {
-          curStats.pathData = pathList2PathData(curStats.pathListRel, function(point) {
-            point.x += elementBBox.left;
-            point.y += elementBBox.top;
-          });
-        }
-
-        if (setStat(attachProps, aplStats, 'strokeWidth', (value = curStats.strokeWidth))) {
-          attachProps.path.style.strokeWidth = value + 'px';
-        }
-
-        // Apply `pathData`
-        if (pathDataHasChanged((value = curStats.pathData), aplStats.pathData)) {
-        //   traceLog.add('pathData'); // [DEBUG/]
-          attachProps.path.setPathData(value);
-          aplStats.pathData = value;
-          updated.pathData = true;
-        }
-
-        // dash
-        if (attachProps.dash) {
-          if (updated.pathData || updated.strokeWidth && (!attachProps.dashLen || !attachProps.dashGap)) {
-            curStats.dashLen = attachProps.dashLen || curStats.strokeWidth * 2;
-            curStats.dashGap = attachProps.dashGap || curStats.strokeWidth;
-            /* necessity? (it's necessary when animation is supported)
-            (function() { // Adjust dash with pathLen
-              var pathLenAll, dashCount;
-              pathLenAll = getAllPathDataLen(curStats.pathData);
-              dashCount = Math.floor(pathLenAll / (curStats.dashLen + curStats.dashGap));
-              if (dashCount >= 2) {
-                curStats.dashLen = pathLenAll / dashCount - curStats.dashGap;
-              }
-            })();
-            */
-          }
-          updated.dash = setStat(attachProps, aplStats, 'dashLen', curStats.dashLen) || updated.dash;
-          updated.dash = setStat(attachProps, aplStats, 'dashGap', curStats.dashGap) || updated.dash;
-          if (updated.dash) {
-            attachProps.path.style.strokeDasharray = aplStats.dashLen + ',' + aplStats.dashGap;
-          }
-        }
-
-        // ViewBox
-        (function() {
-          var curVBBBox = curStats.viewBoxBBox, aplVBBBox = aplStats.viewBoxBBox,
-            viewBox = attachProps.svg.viewBox.baseVal, styles = attachProps.svg.style;
-          curVBBBox.x = curStats.bBoxRel.left + elementBBox.left;
-          curVBBBox.y = curStats.bBoxRel.top + elementBBox.top;
-          curVBBBox.width = curStats.bBoxRel.width;
-          curVBBBox.height = curStats.bBoxRel.height;
-          ['x', 'y', 'width', 'height'].forEach(function(boxKey) {
-            if ((value = curVBBBox[boxKey]) !== aplVBBBox[boxKey]) {
-            //   traceLog.add(boxKey); // [DEBUG/]
-              viewBox[boxKey] = aplVBBBox[boxKey] = value;
-              styles[BBOX_PROP[boxKey]] = value +
-                (boxKey === 'x' || boxKey === 'y' ? attachProps.bodyOffset[boxKey] : 0) + 'px';
-            }
-          });
-        })();
-
-        // traceLog.add('</ATTACHMENTS.areaAnchor.update>'); // [DEBUG/]
-        // Returns `true`, when stats anchors use are updated.
-        return updated.strokeWidth || updated.pathListRel || updated.bBoxRel;
-      }
-    },
-
-    mouseHoverAnchor: {
-      type: 'anchor',
-      argOptions: [{optionName: 'element', type: isElement}, {optionName: 'showEffectName', type: 'string'}],
-
-      style: {
-        backgroundImage: 'url(\'data:image/svg+xml;charset=utf-8;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0Ij48cG9seWdvbiBwb2ludHM9IjI0LDAgMCw4IDgsMTEgMCwxOSA1LDI0IDEzLDE2IDE2LDI0IiBmaWxsPSJjb3JhbCIvPjwvc3ZnPg==\')',
-        backgroundSize: '', // It's set in init().
-        backgroundRepeat: 'no-repeat',
-        backgroundColor: '#f8f881',
-        cursor: 'default'
-      },
-      hoverStyle: {
-        backgroundImage: 'none',
-        backgroundColor: '#fadf8f'
-      },
-      padding: {top: 1, right: 15/* >(backgroundSize.width + backgroundPosition.right) */, bottom: 1, left: 2},
-      minHeight: 15,
-      backgroundPosition: {right: 2, top: 2},
-      backgroundSize: {width: 12, height: 12},
-
-      dirKeys: [['top', 'Top'], ['right', 'Right'], ['bottom', 'Bottom'], ['left', 'Left']],
-
-      // attachOptions: element, style, hoverStyle, showEffectName, animOptions, onSwitch
-      init: function(attachProps, attachOptions) {
-        // traceLog.add('<ATTACHMENTS.mouseHoverAnchor.init>'); // [DEBUG/]
-        var conf = ATTACHMENTS.mouseHoverAnchor,
-          curStyle, elmStyle, bBox, displaySave, paddingSave = {},
-          showEffectName, animOptions, onSwitch;
-        attachProps.element = ATTACHMENTS.pointAnchor.checkElement(attachOptions.element);
-        // Check HTML element
-        if (!(function(element) {
-          var win, doc;
-          return !!((doc = element.ownerDocument) && (win = doc.defaultView) && win.HTMLElement &&
-            element instanceof win.HTMLElement);
-        })(attachProps.element)) {
-          throw new Error('`element` must be HTML element');
-        }
-
-        conf.style.backgroundSize =
-          conf.backgroundSize.width + 'px ' + conf.backgroundSize.height + 'px';
-
-        // copy default
-        ['style', 'hoverStyle'].forEach(function(key) {
-          var defaultStyle = conf[key];
-          attachProps[key] = Object.keys(defaultStyle).reduce(function(copyObj, propName) {
-            copyObj[propName] = defaultStyle[propName];
-            return copyObj;
-          }, {});
-        });
-
-        curStyle = attachProps.element.ownerDocument.defaultView.getComputedStyle(attachProps.element, '');
-        // display
-        if (curStyle.display === 'inline') {
-          attachProps.style.display = 'inline-block';
-        } else if (curStyle.display === 'none') {
-          attachProps.style.display = 'block'; // Can't get default `display` when it is `none`.
-        }
-        // padding (simulate min-padding)
-        ATTACHMENTS.mouseHoverAnchor.dirKeys.forEach(function(key) {
-          var confKey = key[0], styleKey = 'padding' + key[1];
-          if (parseFloat(curStyle[styleKey]) < conf.padding[confKey]) {
-            attachProps.style[styleKey] = conf.padding[confKey] + 'px';
-          }
-        });
-
-        // Make box layout temporarily to get size before binding.
-        if (attachProps.style.display) {
-          displaySave = attachProps.element.style.display;
-          attachProps.element.style.display = attachProps.style.display;
-        }
-        ATTACHMENTS.mouseHoverAnchor.dirKeys.forEach(function(key) {
-          var styleKey = 'padding' + key[1];
-          if (attachProps.style[styleKey]) {
-            paddingSave[styleKey] = attachProps.element.style[styleKey];
-            attachProps.element.style[styleKey] = attachProps.style[styleKey];
-          }
-        });
-        bBox = attachProps.element.getBoundingClientRect();
-
-        // height (simulate min-height with current style (particularly box-sizing))
-        if (bBox.height < conf.minHeight) {
-          if (IS_TRIDENT) { // `getComputedStyle().height` returns incorrect value
-            (function() {
-              var height = conf.minHeight;
-              if (curStyle.boxSizing === 'content-box') {
-                height -= parseFloat(curStyle.borderTopWidth) + parseFloat(curStyle.borderBottomWidth) +
-                  parseFloat(curStyle.paddingTop) + parseFloat(curStyle.paddingBottom);
-              } else if (curStyle.boxSizing === 'padding-box') {
-                height -= parseFloat(curStyle.borderTopWidth) + parseFloat(curStyle.borderBottomWidth);
-              }
-              attachProps.style.height = height + 'px';
-            })();
-          } else {
-            attachProps.style.height = parseFloat(curStyle.height) + (conf.minHeight - bBox.height) + 'px';
-          }
-        }
-
-        if (IS_WEBKIT) { // [WEBKIT] rel-position is not supported
-          attachProps.style.backgroundPosition =
-            // bBox.width should be larger than (backgroundSize.width + backgroundPosition.right) by padding.
-            (bBox.width - conf.backgroundSize.width - conf.backgroundPosition.right) + 'px ' +
-            conf.backgroundPosition.top + 'px';
-        } else {
-          attachProps.style.backgroundPosition =
-            'right ' + conf.backgroundPosition.right + 'px top ' + conf.backgroundPosition.top + 'px';
-        }
-
-        // Restore
-        if (attachProps.style.display) {
-          attachProps.element.style.display = displaySave;
-        }
-        ATTACHMENTS.mouseHoverAnchor.dirKeys.forEach(function(key) {
-          var styleKey = 'padding' + key[1];
-          if (attachProps.style[styleKey]) {
-            attachProps.element.style[styleKey] = paddingSave[styleKey];
-          }
-        });
-
-        // merge
-        ['style', 'hoverStyle'].forEach(function(key) {
-          var propStyle = attachProps[key], optionStyle = attachOptions[key];
-          if (isObject(optionStyle)) {
-            Object.keys(optionStyle).forEach(function(propName) {
-              if (typeof optionStyle[propName] === 'string' || isFinite(optionStyle[propName])) {
-                propStyle[propName] = optionStyle[propName];
-              } else if (optionStyle[propName] == null) {
-                delete propStyle[propName];
-              }
-            });
-          }
-        });
-
-        if (typeof attachOptions.onSwitch === 'function') { onSwitch = attachOptions.onSwitch; }
-
-        if (attachOptions.showEffectName && SHOW_EFFECTS[attachOptions.showEffectName]) {
-          attachProps.showEffectName = showEffectName = attachOptions.showEffectName;
-        }
-        animOptions = attachOptions.animOptions;
-        attachProps.elmStyle = elmStyle = attachProps.element.style;
-
-        // event handler for this instance
-        attachProps.mouseenter = function(event) {
-        //   traceLog.add('<ATTACHMENTS.mouseHoverAnchor.mouseenter>'); // [DEBUG/]
-          attachProps.hoverStyleSave = conf.getStyles(elmStyle, Object.keys(attachProps.hoverStyle));
-          conf.setStyles(elmStyle, attachProps.hoverStyle);
-          attachProps.boundTargets.forEach(function(boundTarget) {
-            show(boundTarget.props, true, showEffectName, animOptions);
-          });
-          if (onSwitch) { onSwitch(event); }
-        //   traceLog.add('</ATTACHMENTS.mouseHoverAnchor.mouseenter>'); // [DEBUG/]
-        };
-
-        attachProps.mouseleave = function(event) {
-        //   traceLog.add('<ATTACHMENTS.mouseHoverAnchor.mouseleave>'); // [DEBUG/]
-          conf.setStyles(elmStyle, attachProps.hoverStyleSave);
-          attachProps.boundTargets.forEach(function(boundTarget) {
-            show(boundTarget.props, false, showEffectName, animOptions);
-          });
-          if (onSwitch) { onSwitch(event); }
-        //   traceLog.add('</ATTACHMENTS.mouseHoverAnchor.mouseleave>'); // [DEBUG/]
-        };
-
-        // traceLog.add('</ATTACHMENTS.mouseHoverAnchor.init>'); // [DEBUG/]
-        return true;
-      },
-
-      bind: function(attachProps, bindTarget) {
-        // traceLog.add('<ATTACHMENTS.mouseHoverAnchor.bind>'); // [DEBUG/]
-        if (bindTarget.props.svg) {
-          ATTACHMENTS.mouseHoverAnchor.llShow(bindTarget.props, false, attachProps.showEffectName);
-        } else { // SVG is not setup yet.
-          addDelayedProc(function() {
-            ATTACHMENTS.mouseHoverAnchor.llShow(bindTarget.props, false, attachProps.showEffectName);
-          });
-        }
-        if (!attachProps.enabled) {
-          attachProps.styleSave =
-            ATTACHMENTS.mouseHoverAnchor.getStyles(attachProps.elmStyle, Object.keys(attachProps.style));
-          ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.style);
-          attachProps.removeEventListener =
-            mouseEnterLeave(attachProps.element, attachProps.mouseenter, attachProps.mouseleave);
-          attachProps.enabled = true;
-        }
-        // traceLog.add('</ATTACHMENTS.mouseHoverAnchor.bind>'); // [DEBUG/]
-        return true;
-      },
-
-      unbind: function(attachProps, boundTarget) {
-        // traceLog.add('<ATTACHMENTS.mouseHoverAnchor.unbind>'); // [DEBUG/]
-        if (attachProps.enabled && attachProps.boundTargets.length <= 1) { // last one that is unbound
-          attachProps.removeEventListener();
-          ATTACHMENTS.mouseHoverAnchor.setStyles(attachProps.elmStyle, attachProps.styleSave);
-          attachProps.enabled = false;
-        }
-        ATTACHMENTS.mouseHoverAnchor.llShow(boundTarget.props, true, attachProps.showEffectName);
-        // traceLog.add('</ATTACHMENTS.mouseHoverAnchor.unbind>'); // [DEBUG/]
-      },
-
-      removeOption: function(attachProps, boundTarget) {
-        ATTACHMENTS.pointAnchor.removeOption(attachProps, boundTarget);
-      },
-
-      remove: function(attachProps) {
-        // traceLog.add('<ATTACHMENTS.mouseHoverAnchor.remove>'); // [DEBUG/]
-        if (attachProps.boundTargets.length) { // it should be unbound by LeaderLineAttachment.remove
-        //   traceLog.add('error-not-unbound'); // [DEBUG/]
-          console.error('LeaderLineAttachment was not unbound by remove');
-          attachProps.boundTargets.forEach(
-            function(boundTarget) { ATTACHMENTS.mouseHoverAnchor.unbind(attachProps, boundTarget); });
-        }
-        // traceLog.add('</ATTACHMENTS.mouseHoverAnchor.remove>'); // [DEBUG/]
-      },
-
-      getBBoxNest: function(attachProps, props) {
-        return getBBoxNest(attachProps.element, props.baseWindow);
-      },
-
-      // show/hide immediately
-      llShow: function(props, on, showEffectName) {
-        SHOW_EFFECTS[showEffectName || props.curStats.show_effect].stop(props, true, on);
-        props.aplStats.show_on = on; // It is not updated by svgShow(). (It is used in show().)
-      },
-
-      getStyles: function(elmStyle, propNames) {
-        return propNames.reduce(function(copyObj, propName) {
-          copyObj[propName] = elmStyle[propName];
-          return copyObj;
-        }, {});
-      },
-
-      setStyles: function(elmStyle, styles) {
-        Object.keys(styles).forEach(function(propName) { elmStyle[propName] = styles[propName]; });
-      }
-    },
-
     captionLabel: {
       type: 'label',
       argOptions: [{optionName: 'text', type: 'string'}],
@@ -4625,12 +3730,10 @@ import pathDataPolyfill from './path-data-polyfill';
             }
           }
 
-          if (setStat(attachProps, aplStats, 'x', (value = curStats.x)
-              /* [DEBUG] */, null, 'x%_'/* [/DEBUG] */)) {
+          if (setStat(attachProps, aplStats, 'x', (value = curStats.x)/* [DEBUG] */, null, 'x%_'/* [/DEBUG] */)) {
             attachProps.elmPosition.x.baseVal.getItem(0).value = value;
           }
-          if (setStat(attachProps, aplStats, 'y', (value = curStats.y)
-              /* [DEBUG] */, null, 'y%_'/* [/DEBUG] */)) {
+          if (setStat(attachProps, aplStats, 'y', (value = curStats.y)/* [DEBUG] */, null, 'y%_'/* [/DEBUG] */)) {
             attachProps.elmPosition.y.baseVal.getItem(0).value = value + attachProps.height;
           }
         //   traceLog.add('</ATTACHMENTS.captionLabel.updateSocketXY>'); // [DEBUG/]
@@ -5015,8 +4118,7 @@ import pathDataPolyfill from './path-data-polyfill';
           }
 
           curStats.startOffset = startOffset;
-          if (setStat(attachProps, aplStats, 'startOffset', startOffset
-              /* [DEBUG] */, null, 'startOffset%_'/* [/DEBUG] */)) {
+          if (setStat(attachProps, aplStats, 'startOffset', startOffset /* [DEBUG] */, null, 'startOffset%_'/* [/DEBUG] */)) {
             attachProps.elmOffset.startOffset.baseVal.value = startOffset;
           }
         //   traceLog.add('</ATTACHMENTS.pathLabel.updateStartOffset>'); // [DEBUG/]

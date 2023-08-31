@@ -39,7 +39,7 @@
         @endforeach
     </div>
 
-    <footer class="absolute bottom-0 right-0 text-xs text-slate-400 px-4 py-3">
+    <footer class="fixed bottom-0 right-0 text-xs text-slate-400 px-4 py-3">
         Powered by Vasyl Halushchak
     </footer>
 
